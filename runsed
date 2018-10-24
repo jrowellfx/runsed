@@ -1,0 +1,137 @@
+#!/bin/bash
+
+# Copyright (c) 2008-2010, James Philip Rowell,
+# Orange Imagination & Concepts, Inc.
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+# 
+#   - Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#   - Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in
+#     the documentation and/or other materials provided with the
+#     distribution.
+#   - Neither the name "Orange Imagination & Concepts, Inc." nor the
+#     names of its contributors may be used to endorse or promote
+#     products derived from this software without specific prior written
+#     permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# runsed - helpful wrapper to run "sed -f sed.script" on a list of files.
+
+set +o noclobber
+
+cleanup() {
+    /bin/rm /tmp/runsed$$ > /dev/null 2>&1
+    exit
+}
+
+trap cleanup INT
+
+usageExit() {
+    echo "Usage: runsed [-h | --help] [FILE]..."
+    if [ "$1" = help ]; then
+        cat - <<EOF
+
+runsed is a wrapper for the command "sed -f sed.script FILE". runsed runs
+the script-file called "sed.script" (which must exist in the current directory)
+on each FILE listed on the command line.  runsed changes the files in place,
+that is, it replaces the existing FILE with a stream-edited copy of itself.
+
+A copy of each original FILE is created called ".FILE.runsed" in the directory
+that FILE resides.
+
+Two special files are also created in the current directory to allow you
+to review all the changes made as well as undo the changes if the results
+weren't what you expected.  The files ".runsed.diff.runsed" and
+".runsed.undo.runsed" are executable.
+
+When you are eventually satisfied simply remove all files called ".*.runsed"
+with the command:
+    rm .*.runsed
+
+If you changed files in subdirectories, this is a better way to get rid
+of all the crufty leftovers:
+    find . -name '.*.runsed' -type f -print0 | xargs -0 /bin/rm -f
+
+Ultimately it's up to you to clean up the crufty leftover files.
+
+EOF
+    fi
+    exit 1
+}
+
+#
+# Parse options.  Stop when you get to the file list.
+#
+while :
+do
+    case "$1" in
+        -h|--help) usageExit help
+        ;;
+
+        -*) echo "runsed: ERROR: Invalid option '$1'."
+             usageExit
+        ;;
+
+        *) break # We're done processing arguments, so let's get on with it.
+    esac
+done
+
+if [ ! -e sed.script ]; then
+    echo runsed: Error: no sed.script file exists in current directory
+    exit 1
+fi
+
+echo '#!/bin/bash' >  .runsed.undo.runsed
+echo cd `pwd`      >> .runsed.undo.runsed
+echo '#!/bin/bash' >  .runsed.diff.runsed
+echo cd `pwd`      >> .runsed.diff.runsed
+chmod +x .runsed.undo.runsed .runsed.diff.runsed
+echo '( set -x' >> .runsed.diff.runsed
+
+while  [ $# -ne 0 ]
+do
+    i="$1"
+
+    if [ "$i" != "sed.script" ] && [ -f "$i" ] && [ -w "$i" ] ; then
+        sed -f sed.script "$i" > /tmp/runsed$$
+        if [ $? -ne 0 ]; then
+	    /bin/rm .runsed.undo.runsed
+	    /bin/rm .runsed.diff.runsed
+	    /bin/rm /tmp/runsed$$ > /dev/null 2>&1
+            exit 1
+        fi
+        cmp -s "$i" /tmp/runsed$$ > /dev/null 2>&1
+        if [ $? -eq 1 ]; then
+	    d=`dirname "$i"`
+	    f=`basename "$i"`
+	    /bin/cp "$i" "$d"/."$f".runsed
+	    echo /bin/cp \""$d"\"/.\""$f"\".runsed \""$i"\" >> .runsed.undo.runsed
+	    echo "/usr/bin/diff \""$d"\"/.\""$f"\".runsed \""$i"\"; echo" >> .runsed.diff.runsed
+            /bin/cp /tmp/runsed$$ "$i"
+        fi
+    fi
+    if [ ! -w "$i" ]; then
+        echo runsed: WARNING: "$i" not writeable, no change made.
+    fi
+    shift
+done
+
+echo ') 2>&1 | grep -v "^+ echo" | less' >> .runsed.diff.runsed
+
+cleanup
