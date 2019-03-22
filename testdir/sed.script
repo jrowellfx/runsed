@@ -1,0 +1,4 @@
+1,$ s/.* Witch. //
+1,$ s/lightning/LIGHTNING/g
+1,$ s/the/YOWZA/g
+1,$ s/thy/EGG/g
