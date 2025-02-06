@@ -9,7 +9,7 @@ to batch run sed-scripts on files. Quite robust! Easy to back out changes!
 on each `FILE` listed on the command line.
 
   `runsed` changes the files in place,
-that is, it replaces the existing FILE with a stream-edited copy of itself.
+that is, it replaces the existing `FILE` with a stream-edited copy of itself.
 
 A backup copy of each original `FILE` is created called "`.FILE.runsed`" in the directory
 that `FILE` resides.
