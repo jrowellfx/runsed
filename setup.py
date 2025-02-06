@@ -5,7 +5,7 @@ import os
 import shutil
 
 setup(name='runsed',
-      version='1.000',
+      version='1.0.1',
       description='Wrapper for safely running sed on files.',
       long_description='',
       author='James Philip Rowell',

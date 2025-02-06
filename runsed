@@ -47,33 +47,49 @@ cleanup() {
 
 trap cleanup INT
 
+# MAJOR version for incompatible API changes
+# MINOR version for added functionality in a backwards compatible manner
+# PATCH version for backwards compatible bug fixes
+#
+VERSION=1.0.1     # Semantic Versioning 2.0.0
+
 usageExit() {
     echo "Usage: runsed [-h | --help] [FILE]..."
     if [ "$1" = help ]; then
         cat - <<EOF
 
-runsed is a wrapper for the command "sed -f sed.script FILE". runsed runs
-the script-file called "sed.script" (which must exist in the current directory)
-on each FILE listed on the command line.  runsed changes the files in place,
-that is, it replaces the existing FILE with a stream-edited copy of itself.
+runsed is a wrapper for the command "sed -f sed.script [FILE]...".
 
-A copy of each original FILE is created called ".FILE.runsed" in the directory
-that FILE resides.
+runsed runs a script-file called "sed.script" (that must exist in the
+current directory) on each FILE listed on the command line.
+
+runsed changes the files in place, that is, it replaces the existing
+FILE with a stream-edited copy of itself.
+
+A backup copy of each original FILE is created called ".FILE.runsed" in the
+directory that FILE resides.
 
 Two special files are also created in the current directory to allow you
 to review all the changes made as well as undo the changes if the results
-weren't what you expected.  The files ".runsed.diff.runsed" and
-".runsed.undo.runsed" are executable.
+weren't what you expected.  Namely, the files ".runsed.diff.runsed" and
+".runsed.undo.runsed" which are executable.
 
 When you are eventually satisfied simply remove all files called ".*.runsed"
 with the command:
     rm .*.runsed
 
 If you changed files in subdirectories, this is a better way to get rid
-of all the crufty leftovers:
+of all the crufty leftovers, plus it handles files with spaces in
+their names properly:
+
     find . -name '.*.runsed' -type f -print0 | xargs -0 /bin/rm -f
 
 Ultimately it's up to you to clean up the crufty leftover files.
+
+optional arguments:
+
+ -h, --help      show this help and exit
+ --version       print out the version number and exit
 
 EOF
     fi
@@ -87,6 +103,10 @@ while :
 do
     case "$1" in
         -h|--help) usageExit help
+        ;;
+
+        --version) echo $VERSION
+            exit 0
         ;;
 
         -*) echo "runsed: ERROR: Invalid option '$1'."
