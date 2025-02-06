@@ -44,3 +44,28 @@ optional arguments:
  -h, --help      show the help and exit
  --version       print out the version number and exit
 ```
+
+### Installation
+
+Download the latest tarball (from the dist directory) and unzip it. For example:
+
+```
+$ tar -xvzf runsed-1.0.1.tar.gz
+runsed-1.0.1/
+runsed-1.0.1/PKG-INFO
+runsed-1.0.1/README.md
+runsed-1.0.1/runsed
+runsed-1.0.1/setup.py
+```
+
+If you are not superuser then just copy the command `runsed` to your `~/bin`.
+
+If you want to install system wide then
+
+```
+$ su -
+# cd runsed-1.0.1
+# python3 setup.py install
+```
+
+And the `runsed` will be installed in `/usr/local/bin`

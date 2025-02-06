@@ -54,7 +54,7 @@ trap cleanup INT
 VERSION=1.0.1     # Semantic Versioning 2.0.0
 
 usageExit() {
-    echo "Usage: runsed [-h | --help] [FILE]..."
+    echo "Usage: runsed [-h | --help | --version] [FILE]..."
     if [ "$1" = help ]; then
         cat - <<EOF
 
