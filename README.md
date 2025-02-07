@@ -6,6 +6,7 @@ to batch run sed-scripts on files. Quite robust! Easy to back out changes!
 `runsed` is a wrapper for the command "`sed -f sed.script [FILE]...`".
 
 `runsed` runs a script-file called `sed.script` (that must exist in the current directory)
+through [`sed`](https://man7.org/linux/man-pages/man1/sed.1p.html)
 on each `FILE` listed on the command line.
 
   `runsed` changes the files in place,
